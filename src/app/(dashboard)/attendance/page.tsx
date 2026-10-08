@@ -23,7 +23,6 @@ import { useSession } from "next-auth/react"
 type TodayRecord = {
   id: string
   checkInTime: string | null
-  checkInTime: string | null
   checkOutTime: string | null
   status: string
   selfieCheckIn: string | null
