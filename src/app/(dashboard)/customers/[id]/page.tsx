@@ -30,7 +30,9 @@ type CustomerDetail = {
   updatedAt: string
 }
 
-export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+import { Suspense } from "react"
+
+function CustomerProfileContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [customer, setCustomer] = useState<CustomerDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -148,6 +150,18 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+      </div>
+    }>
+      <CustomerProfileContent params={params} />
+    </Suspense>
   )
 }
 

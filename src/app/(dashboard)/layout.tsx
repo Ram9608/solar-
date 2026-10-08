@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { Header } from "@/components/layout/Header"
 import { MobileNav } from "@/components/layout/MobileNav"
@@ -15,7 +15,9 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Desktop Sidebar */}
-      <Sidebar />
+      <Suspense fallback={<div className="w-64 h-full bg-slate-900" />}>
+        <Sidebar />
+      </Suspense>
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
@@ -27,7 +29,9 @@ export default function DashboardLayout({
             className="w-64 h-full bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <Sidebar />
+            <Suspense fallback={<div className="w-64 h-full" />}>
+              <Sidebar />
+            </Suspense>
           </div>
         </div>
       )}
@@ -40,7 +44,9 @@ export default function DashboardLayout({
             {children}
           </div>
         </main>
-        <MobileNav />
+        <Suspense fallback={null}>
+          <MobileNav />
+        </Suspense>
       </div>
     </div>
   )
