@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(cuid())
+  name             String
+  mobile           String            @unique
+  email            String?           @unique
+  companyName      String?
+  city             String?
+  passwordHash     String
+  role             Role              @default(SALES)
+  deviceId         String?
+  pushSubscription String?           // JSON string of Web Push sub
+  active           Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  
+  attendances      Attendance[]
+  customers        Customer[]
+  leads            Lead[]
+  projects         Project[]
+  assignedFollowUps FollowUp[]       @relation("AssignedFollowUps")
+  notifications    Notification[]
+  activityLogs     ActivityLog[]
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  SALES
+  TECHNICIAN
+}
+
+model Attendance {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  date           DateTime  @db.Date
+  checkInTime    DateTime?
+  checkOutTime   DateTime?
+  status         AttendanceStatus
+  selfieCheckIn  String?   // URL to image
+  selfieCheckOut String?   // URL to image
+  checkInLocation String?
+  checkOutLocation String?
+  leaveReason    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, date])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  LEAVE
+}
+
+model Customer {
+  id                    String      @id @default(cuid())
+  name                  String
+  mobile                String      @unique
+  altMobile             String?
+  address               String
+  district              String
+  block                 String?
+  village               String?
+  pincode               String?
+  electricityConsumerNo String?
+  monthlyBill           Float?
+  roofType              String?
+  status                CustomerStatus
+  employeeId            String
+  employee              User        @relation(fields: [employeeId], references: [id])
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  projects              Project[]
+  leads                 Lead[]
+  quotations            Quotation[]
+  followUps             FollowUp[]
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Lead {
+  id          String      @id @default(cuid())
+  source      String
+  stage       LeadStage   @default(NEW)
+  lossReason  String?
+  customerId  String
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  employeeId  String
+  employee    User        @relation(fields: [employeeId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  followUps   FollowUp[]
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  SURVEY
+  QUOTATION
+  NEGOTIATION
+  WON
+  LOST
+}
+
+model FollowUp {
+  id            String          @id @default(cuid())
+  dueDate       DateTime
+  note          String
+  status        FollowUpStatus  @default(PENDING)
+  reminded      Boolean         @default(false)
+  assignedToId  String
+  assignedTo    User            @relation("AssignedFollowUps", fields: [assignedToId], references: [id])
+  
+  customerId    String?
+  customer      Customer?       @relation(fields: [customerId], references: [id])
+  
+  leadId        String?
+  lead          Lead?           @relation(fields: [leadId], references: [id])
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+enum FollowUpStatus {
+  PENDING
+  DONE
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  title      String
+  message    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Quotation {
+  id              String          @id @default(cuid())
+  customerId      String
+  customer        Customer        @relation(fields: [customerId], references: [id])
+  systemSizeKW    Float
+  panelChoice     String
+  inverterChoice  String
+  totalCost       Float
+  subsidyExpected Float
+  fileUrl         String?
+  status          QuotationStatus @default(DRAFT)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+enum QuotationStatus {
+  DRAFT
+  FINAL
+  APPROVED
+  REJECTED
+}
+
+model RateList {
+  id        String   @id @default(cuid())
+  item      String   @unique
+  price     Float
+  unit      String
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id             String         @id @default(cuid())
+  customerId     String
+  customer       Customer       @relation(fields: [customerId], references: [id])
+  stage          ProjectStage   @default(SURVEY)
+  assignedTechId String?
+  assignedTech   User?          @relation(fields: [assignedTechId], references: [id])
+  subsidyStatus  String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+enum ProjectStage {
+  SURVEY
+  MATERIAL_DISPATCH
+  INSTALLATION
+  NET_METER
+  COMMISSIONING
+}
+
+model InventoryItem {
+  id        String          @id @default(cuid())
+  name      String          @unique
+  quantity  Int             @default(0)
+  status    InventoryStatus @default(IN)
+  updatedAt DateTime        @updatedAt
+}
+
+enum InventoryStatus {
+  IN
+  OUT
+  RETURNED
+  DAMAGED
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  details   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
